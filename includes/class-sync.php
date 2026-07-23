@@ -129,14 +129,21 @@ final class Sync {
 			'trashed' => 0,
 			'errors'  => 0,
 		);
-		$partial = false;
+		$partial      = false;
+		$rate_limited = false;
 
 		foreach ( $sources as $path => $source ) {
 			// Budget guards: stop cleanly and resume later rather than dying
 			// mid-run on a host time limit or the API rate limit.
 			$rate = $client->rate_remaining();
 
-			if ( ( time() - $started ) > self::TIME_BUDGET || ( null !== $rate && $rate < self::RATE_FLOOR ) ) {
+			if ( null !== $rate && $rate < self::RATE_FLOOR ) {
+				$partial      = true;
+				$rate_limited = true;
+				break;
+			}
+
+			if ( ( time() - $started ) > self::TIME_BUDGET ) {
 				$partial = true;
 				break;
 			}
@@ -205,9 +212,14 @@ final class Sync {
 		}
 
 		$report['partial'] = $partial;
-		$report['message'] = $partial
-			? __( 'Partial sync — resuming shortly. Add a GitHub token to raise the API rate limit.', 'gatherpress-docs' )
-			: __( 'Sync complete.', 'gatherpress-docs' );
+		$report['message'] = __( 'Sync complete.', 'gatherpress-docs' );
+
+		if ( $partial ) {
+			// Only pitch a token when the rate limit is actually the problem.
+			$report['message'] = $rate_limited && '' === (string) $settings['token']
+				? __( 'Partial sync — resuming shortly. Add a GitHub token to raise the API rate limit.', 'gatherpress-docs' )
+				: __( 'Partial sync — resuming shortly.', 'gatherpress-docs' );
+		}
 
 		return $report;
 	}

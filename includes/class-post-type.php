@@ -114,9 +114,10 @@ final class Post_Type {
 	 * The configured root page always gets the top-level document listing
 	 * appended after its own content, so the docs are discoverable from the
 	 * front door. Every document gets breadcrumbs prepended, walking from
-	 * the root page down through its directory ancestors. A directory
-	 * document without a README renders as an always-current list of its
-	 * children rather than storing a generated list that would go stale.
+	 * the root page down through its directory ancestors, and its child
+	 * listing appended — after the README content when there is one, as the
+	 * whole body when there is not. The listing is rendered dynamically
+	 * rather than stored, so it never goes stale.
 	 *
 	 * @since 0.1.0
 	 *
@@ -136,11 +137,8 @@ final class Post_Type {
 		}
 
 		if ( is_singular( self::POST_TYPE ) ) {
-			if ( '' === trim( $content ) ) {
-				$content .= self::child_list( (int) get_the_ID() );
-			}
-
-			$content = self::breadcrumbs( (int) get_the_ID(), $root ) . $content;
+			$content .= self::child_list( (int) get_the_ID() );
+			$content  = self::breadcrumbs( (int) get_the_ID(), $root ) . $content;
 		}
 
 		return $content;

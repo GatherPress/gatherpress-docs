@@ -150,7 +150,8 @@ final class Sync {
 
 			$unchanged = $existing
 				&& $existing['sha'] === $source['sha']
-				&& 'trash' !== $existing['status'];
+				&& 'trash' !== $existing['status']
+				&& ( 'dir' !== $source['type'] || self::prettify_name( basename( $path ) ) === $existing['title'] );
 
 			if ( $unchanged ) {
 				// The SHA only covers content. The hierarchy can move without
@@ -321,14 +322,17 @@ final class Sync {
 				return 0;
 			}
 
-			$heading = self::extract_title( $markdown );
+			// Files take their first heading as the title (stripped from the
+			// body, which would otherwise show it twice). Directories keep
+			// their folder name -- stable in listings and breadcrumbs -- and
+			// the README's heading stays in the body.
+			if ( 'file' === $source['type'] ) {
+				$heading = self::extract_title( $markdown );
 
-			if ( '' !== $heading ) {
-				$title = $heading;
-
-				// The heading becomes the post title, which the theme renders
-				// itself -- leaving it in the body would show it twice.
-				$markdown = preg_replace( '/^#\s+.+$/m', '', $markdown, 1 );
+				if ( '' !== $heading ) {
+					$title    = $heading;
+					$markdown = preg_replace( '/^#\s+.+$/m', '', $markdown, 1 );
+				}
 			}
 
 			$html = $client->render_markdown( $markdown );
@@ -393,7 +397,7 @@ final class Sync {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @return array Map of repo path => {id, sha, status, parent}.
+	 * @return array Map of repo path => {id, sha, status, parent, title}.
 	 */
 	private static function existing_posts() {
 		$query = new WP_Query(
@@ -420,6 +424,7 @@ final class Sync {
 				'sha'    => (string) get_post_meta( $post->ID, Post_Type::META_SHA, true ),
 				'status' => $post->post_status,
 				'parent' => (int) $post->post_parent,
+				'title'  => (string) $post->post_title,
 			);
 		}
 

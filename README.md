@@ -6,7 +6,9 @@ your WordPress site, kept in sync automatically.
 A file's first heading becomes its page title (and is dropped from the body so
 it doesn't show twice); directory pages are titled by their folder name, so
 listings and breadcrumbs stay stable regardless of what a README's heading
-says.
+says. Common acronyms (RSVP, URL, API, …) keep their casing, and the
+`gatherpress_docs_directory_title` filter lets a site override any folder's
+title.
 
 Point the plugin at a repository, a branch, and a path (for example
 `GatherPress/gatherpress`, `main`, `docs`), pick a WordPress page as the root,

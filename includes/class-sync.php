@@ -151,7 +151,7 @@ final class Sync {
 			$unchanged = $existing
 				&& $existing['sha'] === $source['sha']
 				&& 'trash' !== $existing['status']
-				&& ( 'dir' !== $source['type'] || self::prettify_name( basename( $path ) ) === $existing['title'] );
+				&& ( 'dir' !== $source['type'] || self::directory_title( $path ) === $existing['title'] );
 
 			if ( $unchanged ) {
 				// The SHA only covers content. The hierarchy can move without
@@ -311,7 +311,7 @@ final class Sync {
 	 * @return int Post ID, or 0 on failure.
 	 */
 	private static function sync_item( $client, $settings, $path, $source, $existing, $parent_id ) {
-		$title   = self::prettify_name( basename( $path ) );
+		$title   = 'dir' === $source['type'] ? self::directory_title( $path ) : self::prettify_name( basename( $path ) );
 		$content = '';
 		$updated = '';
 
@@ -646,6 +646,14 @@ final class Sync {
 	}
 
 	/**
+	 * Well-known acronyms restored to their canonical casing in titles.
+	 *
+	 * @since 0.1.0
+	 * @var string[]
+	 */
+	const ACRONYMS = array( 'API', 'CLI', 'CSS', 'FAQ', 'HTML', 'HTTP', 'ID', 'JS', 'JSON', 'PHP', 'PR', 'REST', 'RSVP', 'SEO', 'SQL', 'UI', 'URL', 'WP' );
+
+	/**
 	 * A human title from a file or directory name.
 	 *
 	 * @since 0.1.0
@@ -655,9 +663,39 @@ final class Sync {
 	 * @return string Prettified title.
 	 */
 	private static function prettify_name( $name ) {
-		$name = preg_replace( '/\.md$/i', '', $name );
+		$name  = preg_replace( '/\.md$/i', '', $name );
+		$title = ucwords( str_replace( array( '-', '_' ), ' ', (string) $name ) );
 
-		return ucwords( str_replace( array( '-', '_' ), ' ', (string) $name ) );
+		foreach ( self::ACRONYMS as $acronym ) {
+			$title = preg_replace( '/\b' . $acronym . '\b/i', $acronym, (string) $title );
+		}
+
+		return (string) $title;
+	}
+
+	/**
+	 * The title for a directory document.
+	 *
+	 * Filterable so a site can override specific folders. The same value is
+	 * used in the sync skip check, so a filtered title sticks instead of
+	 * fighting the next run.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param string $path Repo path of the directory.
+	 *
+	 * @return string The title.
+	 */
+	private static function directory_title( $path ) {
+		/**
+		 * Filter a directory document's title.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param string $title The prettified folder name.
+		 * @param string $path  Repo path of the directory.
+		 */
+		return (string) apply_filters( 'gatherpress_docs_directory_title', self::prettify_name( basename( $path ) ), $path );
 	}
 
 	/**

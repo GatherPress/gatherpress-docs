@@ -109,30 +109,52 @@ final class Post_Type {
 	}
 
 	/**
-	 * Append a child listing to directory documents that have no content.
+	 * Append document listings where they belong.
 	 *
-	 * A directory without a README renders as an always-current list of its
-	 * children rather than storing a generated list that would go stale.
+	 * The configured root page always gets the top-level document listing
+	 * appended after its own content, so the docs are discoverable from the
+	 * front door. A directory document without a README renders as an
+	 * always-current list of its children rather than storing a generated
+	 * list that would go stale.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param string $content The post content.
 	 *
-	 * @return string The content, with a child listing appended when applicable.
+	 * @return string The content, with a listing appended when applicable.
 	 */
 	public static function maybe_list_children( $content ) {
-		if ( ! is_singular( self::POST_TYPE ) || ! in_the_loop() || ! is_main_query() ) {
+		if ( ! in_the_loop() || ! is_main_query() ) {
 			return $content;
 		}
 
-		if ( '' !== trim( $content ) ) {
-			return $content;
+		$root = (int) Settings::get()['root_page'];
+
+		if ( $root && is_page( $root ) ) {
+			return $content . self::child_list( 0 );
 		}
 
+		if ( is_singular( self::POST_TYPE ) && '' === trim( $content ) ) {
+			return $content . self::child_list( (int) get_the_ID() );
+		}
+
+		return $content;
+	}
+
+	/**
+	 * A linked list of the documents under a parent.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int $parent Parent post ID (0 for top-level documents).
+	 *
+	 * @return string List markup, or '' when there are no children.
+	 */
+	private static function child_list( $parent ) {
 		$children = get_posts(
 			array(
 				'post_type'      => self::POST_TYPE,
-				'post_parent'    => get_the_ID(),
+				'post_parent'    => $parent,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
 				'posts_per_page' => -1,
@@ -140,7 +162,7 @@ final class Post_Type {
 		);
 
 		if ( empty( $children ) ) {
-			return $content;
+			return '';
 		}
 
 		$list = '<ul class="gatherpress-docs-children">';
@@ -153,8 +175,6 @@ final class Post_Type {
 			);
 		}
 
-		$list .= '</ul>';
-
-		return $content . $list;
+		return $list . '</ul>';
 	}
 }

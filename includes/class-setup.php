@@ -76,6 +76,62 @@ final class Setup {
 		add_action( 'update_option_' . Settings::OPTION, array( $this, 'reschedule' ), 10, 2 );
 		add_action( 'add_option_' . Settings::OPTION, array( $this, 'schedule_new' ), 10, 2 );
 		add_action( 'admin_post_gatherpress_docs_sync', array( $this, 'handle_manual_sync' ) );
+		add_filter( 'display_post_states', array( $this, 'add_root_page_state' ), 10, 2 );
+		add_action( 'admin_notices', array( $this, 'root_page_editor_notice' ) );
+	}
+
+	/**
+	 * Badge the configured root page in the Pages list.
+	 *
+	 * Mirrors how core labels the posts page: the special role is visible
+	 * right where the page is listed.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param array    $post_states Post state labels.
+	 * @param \WP_Post $post        The post.
+	 *
+	 * @return array Post states including ours when applicable.
+	 */
+	public function add_root_page_state( $post_states, $post ) {
+		$settings = Settings::get();
+
+		if ( 'page' === $post->post_type && (int) $settings['root_page'] === (int) $post->ID ) {
+			$post_states['gatherpress_docs_root'] = __( 'GitHub Docs Root', 'gatherpress-docs' );
+		}
+
+		return $post_states;
+	}
+
+	/**
+	 * Explain the page's role when the root page is being edited.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	public function root_page_editor_notice() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || 'post' !== $screen->base || 'page' !== $screen->post_type ) {
+			return;
+		}
+
+		$settings = Settings::get();
+		$post_id  = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only screen context.
+
+		if ( ! $post_id || (int) $settings['root_page'] !== $post_id ) {
+			return;
+		}
+
+		wp_admin_notice(
+			sprintf(
+				/* translators: %s: repository in owner/name form. */
+				esc_html__( 'This page is the GitHub Docs root — documents synced from %s nest beneath it, and its content is followed by the document listing.', 'gatherpress-docs' ),
+				'<code>' . esc_html( $settings['repo'] ) . '</code>'
+			),
+			array( 'type' => 'info' )
+		);
 	}
 
 	/**

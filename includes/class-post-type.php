@@ -109,19 +109,20 @@ final class Post_Type {
 	}
 
 	/**
-	 * Append document listings where they belong.
+	 * Wrap document content with navigation where it belongs.
 	 *
 	 * The configured root page always gets the top-level document listing
 	 * appended after its own content, so the docs are discoverable from the
-	 * front door. A directory document without a README renders as an
-	 * always-current list of its children rather than storing a generated
-	 * list that would go stale.
+	 * front door. Every document gets breadcrumbs prepended, walking from
+	 * the root page down through its directory ancestors. A directory
+	 * document without a README renders as an always-current list of its
+	 * children rather than storing a generated list that would go stale.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param string $content The post content.
 	 *
-	 * @return string The content, with a listing appended when applicable.
+	 * @return string The content, with navigation added when applicable.
 	 */
 	public static function maybe_list_children( $content ) {
 		if ( ! in_the_loop() || ! is_main_query() ) {
@@ -134,11 +135,53 @@ final class Post_Type {
 			return $content . self::child_list( 0 );
 		}
 
-		if ( is_singular( self::POST_TYPE ) && '' === trim( $content ) ) {
-			return $content . self::child_list( (int) get_the_ID() );
+		if ( is_singular( self::POST_TYPE ) ) {
+			if ( '' === trim( $content ) ) {
+				$content .= self::child_list( (int) get_the_ID() );
+			}
+
+			$content = self::breadcrumbs( (int) get_the_ID(), $root ) . $content;
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Breadcrumb trail for a document.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int $post_id The document's post ID.
+	 * @param int $root    The configured root page ID (0 for none).
+	 *
+	 * @return string Breadcrumb markup.
+	 */
+	private static function breadcrumbs( $post_id, $root ) {
+		$trail = array();
+
+		if ( $root ) {
+			$trail[] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( (string) get_permalink( $root ) ),
+				esc_html( get_the_title( $root ) )
+			);
+		}
+
+		foreach ( array_reverse( get_post_ancestors( $post_id ) ) as $ancestor ) {
+			$trail[] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( (string) get_permalink( $ancestor ) ),
+				esc_html( get_the_title( $ancestor ) )
+			);
+		}
+
+		$trail[] = sprintf( '<span aria-current="page">%s</span>', esc_html( get_the_title( $post_id ) ) );
+
+		return sprintf(
+			'<nav class="gatherpress-docs-breadcrumbs" aria-label="%s">%s</nav>',
+			esc_attr__( 'Breadcrumbs', 'gatherpress-docs' ),
+			implode( '<span class="gatherpress-docs-breadcrumbs-sep" aria-hidden="true"> / </span>', $trail )
+		);
 	}
 
 	/**

@@ -64,9 +64,11 @@ repository (and private ones, with a token).
   icons are stripped by the sanitizer.
 - A `README.md` at the top of the configured path is skipped — the root page
   you selected is the human-owned front door.
-- Your theme renders the documents with its ordinary single-post template. A
-  directory page without a README shows an automatically generated list of its
-  children.
+- Your theme renders the documents with its ordinary single-post template.
+  Every document is prefixed with a breadcrumb trail walking from the root
+  page down through its directory ancestors, and a directory page without a
+  README shows an automatically generated list of its children. Both carry
+  `gatherpress-docs-*` classes for styling.
 - Uninstalling deletes the plugin's settings and all mirrored documents; they
   are a generated mirror, so nothing original is lost.
 

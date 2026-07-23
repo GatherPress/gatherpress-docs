@@ -142,19 +142,35 @@ final class Sync {
 			}
 
 			$existing  = isset( $posts[ $path ] ) ? $posts[ $path ] : null;
+			$parent_id = 0;
+
+			if ( '' !== $source['parent'] && isset( $posts[ $source['parent'] ] ) ) {
+				$parent_id = $posts[ $source['parent'] ]['id'];
+			}
+
 			$unchanged = $existing
 				&& $existing['sha'] === $source['sha']
 				&& 'trash' !== $existing['status'];
 
 			if ( $unchanged ) {
-				++$report['skipped'];
+				// The SHA only covers content. The hierarchy can move without
+				// it -- changing the base path setting re-bases every parent --
+				// so reparent in place, at no API cost, when it has.
+				if ( $existing['parent'] !== $parent_id ) {
+					wp_update_post(
+						array(
+							'ID'          => $existing['id'],
+							'post_parent' => $parent_id,
+							'post_name'   => sanitize_title( preg_replace( '/\.md$/i', '', basename( $path ) ) ),
+						)
+					);
+
+					$posts[ $path ]['parent'] = $parent_id;
+					++$report['updated'];
+				} else {
+					++$report['skipped'];
+				}
 				continue;
-			}
-
-			$parent_id = 0;
-
-			if ( '' !== $source['parent'] && isset( $posts[ $source['parent'] ] ) ) {
-				$parent_id = $posts[ $source['parent'] ]['id'];
 			}
 
 			$post_id = self::sync_item( $client, $settings, $path, $source, $existing, $parent_id );
@@ -170,6 +186,7 @@ final class Sync {
 				'id'     => $post_id,
 				'sha'    => $source['sha'],
 				'status' => 'publish',
+				'parent' => $parent_id,
 			);
 		}
 
@@ -376,7 +393,7 @@ final class Sync {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @return array Map of repo path => {id, sha, status}.
+	 * @return array Map of repo path => {id, sha, status, parent}.
 	 */
 	private static function existing_posts() {
 		$query = new WP_Query(
@@ -402,6 +419,7 @@ final class Sync {
 				'id'     => $post->ID,
 				'sha'    => (string) get_post_meta( $post->ID, Post_Type::META_SHA, true ),
 				'status' => $post->post_status,
+				'parent' => (int) $post->post_parent,
 			);
 		}
 

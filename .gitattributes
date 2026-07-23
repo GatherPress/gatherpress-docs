@@ -1,0 +1,5 @@
+# Dev-only files excluded from the built zip (git archive honors these).
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/bin export-ignore
+/dist export-ignore

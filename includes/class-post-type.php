@@ -96,7 +96,9 @@ final class Post_Type {
 				'public'              => true,
 				'hierarchical'        => true,
 				'show_ui'             => false,
-				'show_in_rest'        => false,
+				// REST exposure is what lets the Site Editor offer a
+				// "Single item: Doc" template; the admin UI stays hidden.
+				'show_in_rest'        => true,
 				'exclude_from_search' => false,
 				'supports'            => array( 'title', 'editor', 'page-attributes' ),
 				'has_archive'         => false,

@@ -72,10 +72,17 @@ repository (and private ones, with a token).
 - A `README.md` at the top of the configured path is skipped — the root page
   you selected is the human-owned front door.
 - Your theme renders the documents with its ordinary single-post template.
-  Every document is prefixed with a breadcrumb trail walking from the root
-  page down through its directory ancestors, and a directory page without a
-  README shows an automatically generated list of its children. Both carry
-  `gatherpress-docs-*` classes for styling.
+  The plugin ships two server-rendered blocks to compose that template with:
+  **Doc Breadcrumbs** (the trail from the root page down through the
+  document's directory ancestors) and **Doc Child Pages** (a linked list of
+  the documents nested under the current one). In a block theme, create a
+  `Single item: Doc` template in the Site Editor and place them where you
+  want. The Doc Child Pages block also works on the root page itself, where
+  it lists the top-level documents. Both render with `gatherpress-docs-*`
+  classes for styling.
+- An **empty** root page automatically shows the top-level document listing;
+  a root page with its own content composes its own layout (add the Doc
+  Child Pages block wherever it belongs).
 - Uninstalling deletes the plugin's settings and all mirrored documents; they
   are a generated mirror, so nothing original is lost.
 

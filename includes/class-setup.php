@@ -67,6 +67,7 @@ final class Setup {
 	 */
 	private function __construct() {
 		add_action( 'init', array( Post_Type::class, 'register' ) );
+		add_action( 'init', array( Post_Type::class, 'register_blocks' ) );
 		add_action( 'admin_menu', array( Settings::class, 'register' ) );
 		add_filter( 'the_content', array( Post_Type::class, 'maybe_list_children' ) );
 

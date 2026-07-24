@@ -5,7 +5,7 @@
  * Description:       Mirror a GitHub repository's Markdown documentation as hierarchical pages on your WordPress site, kept in sync automatically.
  * Author:            The GatherPress Community
  * Author URI:        https://gatherpress.org/
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Text Domain:       gatherpress-docs
@@ -23,7 +23,7 @@ if ( defined( 'GATHERPRESS_DOCS_VERSION' ) ) {
 	return;
 }
 
-define( 'GATHERPRESS_DOCS_VERSION', '0.1.0' );
+define( 'GATHERPRESS_DOCS_VERSION', '0.2.0' );
 define( 'GATHERPRESS_DOCS_FILE', __FILE__ );
 define( 'GATHERPRESS_DOCS_PATH', __DIR__ );
 

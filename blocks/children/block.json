@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress-docs/children",
+	"version": "0.2.0",
+	"title": "Doc Child Pages",
+	"category": "widgets",
+	"icon": "networking",
+	"description": "Linked list of the documents nested under the current one. On the docs root page it lists the top-level documents.",
+	"keywords": [ "docs", "children", "navigation", "github" ],
+	"textdomain": "gatherpress-docs",
+	"usesContext": [ "postId" ],
+	"supports": {
+		"html": false,
+		"multiple": false
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

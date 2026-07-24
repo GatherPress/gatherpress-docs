@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress-docs/breadcrumbs",
+	"version": "0.2.0",
+	"title": "Doc Breadcrumbs",
+	"category": "widgets",
+	"icon": "admin-links",
+	"description": "Breadcrumb trail for a synced document, walking from the docs root page down through its directory ancestors.",
+	"keywords": [ "docs", "breadcrumbs", "github" ],
+	"textdomain": "gatherpress-docs",
+	"usesContext": [ "postId" ],
+	"supports": {
+		"html": false,
+		"multiple": false
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

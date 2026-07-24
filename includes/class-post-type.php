@@ -111,21 +111,34 @@ final class Post_Type {
 	}
 
 	/**
-	 * Wrap document content with navigation where it belongs.
+	 * Register the plugin's blocks.
 	 *
-	 * The configured root page always gets the top-level document listing
-	 * appended after its own content, so the docs are discoverable from the
-	 * front door. Every document gets breadcrumbs prepended, walking from
-	 * the root page down through its directory ancestors, and its child
-	 * listing appended — after the README content when there is one, as the
-	 * whole body when there is not. The listing is rendered dynamically
-	 * rather than stored, so it never goes stale.
+	 * Both are server-rendered: Doc Breadcrumbs and Doc Child Pages. Place
+	 * them in the docs single template (or anywhere — they render for the
+	 * contextual post).
+	 *
+	 * @since 0.2.0
+	 *
+	 * @return void
+	 */
+	public static function register_blocks() {
+		register_block_type( GATHERPRESS_DOCS_PATH . '/blocks/breadcrumbs' );
+		register_block_type( GATHERPRESS_DOCS_PATH . '/blocks/children' );
+	}
+
+	/**
+	 * Auto-append the top-level document listing to an empty root page.
+	 *
+	 * Only the configured root page, and only when it has no content of its
+	 * own — a root page with content composes its own layout (the Doc Child
+	 * Pages block is available for that). Document pages get their navigation
+	 * from the blocks in the template, not from this filter.
 	 *
 	 * @since 0.1.0
 	 *
 	 * @param string $content The post content.
 	 *
-	 * @return string The content, with navigation added when applicable.
+	 * @return string The content, with the listing appended when applicable.
 	 */
 	public static function maybe_list_children( $content ) {
 		if ( ! in_the_loop() || ! is_main_query() ) {
@@ -134,13 +147,8 @@ final class Post_Type {
 
 		$root = (int) Settings::get()['root_page'];
 
-		if ( $root && is_page( $root ) ) {
+		if ( $root && is_page( $root ) && '' === trim( $content ) ) {
 			return $content . self::child_list( 0 );
-		}
-
-		if ( is_singular( self::POST_TYPE ) ) {
-			$content .= self::child_list( (int) get_the_ID() );
-			$content  = self::breadcrumbs( (int) get_the_ID(), $root ) . $content;
 		}
 
 		return $content;
@@ -152,11 +160,15 @@ final class Post_Type {
 	 * @since 0.1.0
 	 *
 	 * @param int $post_id The document's post ID.
-	 * @param int $root    The configured root page ID (0 for none).
 	 *
-	 * @return string Breadcrumb markup.
+	 * @return string Breadcrumb markup, or '' for non-documents.
 	 */
-	private static function breadcrumbs( $post_id, $root ) {
+	public static function breadcrumbs( $post_id ) {
+		if ( self::POST_TYPE !== get_post_type( $post_id ) ) {
+			return '';
+		}
+
+		$root  = (int) Settings::get()['root_page'];
 		$trail = array();
 
 		if ( $root ) {
@@ -193,7 +205,7 @@ final class Post_Type {
 	 *
 	 * @return string List markup, or '' when there are no children.
 	 */
-	private static function child_list( $parent ) {
+	public static function child_list( $parent ) {
 		$children = get_posts(
 			array(
 				'post_type'      => self::POST_TYPE,
